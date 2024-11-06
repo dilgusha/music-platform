@@ -31,6 +31,7 @@ import { AdminModule } from './app/admin/admin.module';
       database: config.database.dbName,
       // migrations: [`${__dirname}/**/migrations/*.js`],
       entities: [`${__dirname}/**/*.entity.{ts,js}`],
+      // migrations: [`${__dirname}/**/migrations/*.js`],
       synchronize: true,
       logging: true,
     }),

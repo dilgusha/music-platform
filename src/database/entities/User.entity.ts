@@ -1,10 +1,10 @@
 import { BeforeInsert, Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
-import { Gender, UserRoles } from "src/shared/enum/user.enum";
 import * as bcrypt from 'bcrypt';
 import { ImageEntity } from "./Image.entity";
 import { PlaylistEntity } from "./Playlist.entity";
 import { FollowEntity } from "./Follow.entity";
 import { CommonEntity } from "./Common.entity";
+import { Gender, UserRoles } from "src/shared/enum/user.enum";
 
 @Entity('user')
 

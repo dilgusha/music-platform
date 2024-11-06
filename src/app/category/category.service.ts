@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, HttpException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, ForbiddenException, HttpException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
 import { FindCategoryParams } from "./category.types";
@@ -9,6 +9,7 @@ import { UserEntity } from "src/database/entities/User.entity";
 import { ClsService } from "nestjs-cls";
 import { UserRoles } from "src/shared/enum/user.enum";
 import { UpdateCategoryDto } from "./dto/update-category.dto";
+import { UploadService } from "../upload/upload.service";
 
 @Injectable()
 
@@ -16,8 +17,9 @@ export class CategoryService {
   constructor(
     @InjectRepository(CategoryEntity)
     private categoryRepo: Repository<CategoryEntity>,
-    @InjectRepository(ImageEntity)
-    private imageRepo: Repository<ImageEntity>,
+    private uploadService: UploadService,
+    // @InjectRepository(ImageEntity)
+    // private imageRepo: Repository<ImageEntity>,
     private cls: ClsService
   ) { }
 
@@ -49,6 +51,14 @@ export class CategoryService {
 
     if (!myUser.roles || !myUser.roles.includes(UserRoles.ADMIN)) throw new ForbiddenException('Only admins can create categories')
 
+    if (params.categoryCoverImageId) {
+      const existingCategory = await this.categoryRepo.findOne({
+        where: { categoryCoverImage: { id: params.categoryCoverImageId } },
+      });
+      if (existingCategory) {
+        throw new BadRequestException('This cover image is already used by another category.');
+      }
+    }
     const existingCategory = await this.categoryRepo.findOne({
       where: { categoryName: params.categoryName }
     });
@@ -60,7 +70,7 @@ export class CategoryService {
     const category = this.categoryRepo.create(params);
 
     if (params.categoryCoverImageId) {
-      const image = await this.imageRepo.findOne({ where: { id: params.categoryCoverImageId } });
+      const image = await this.uploadService.findImageById(params.categoryCoverImageId);
       if (image) {
         category.categoryCoverImage = image;
       } else {
@@ -70,6 +80,9 @@ export class CategoryService {
     await this.categoryRepo.save(category);
     return category;
   }
+
+
+
 
   async update(id: number, params: UpdateCategoryDto) {
     const myUser = this.cls.get<UserEntity>('user');
@@ -88,7 +101,7 @@ export class CategoryService {
     let payload: Partial<CategoryEntity> = { ...params };
 
     if (params.categoryCoverImageId) {
-      const image = await this.imageRepo.findOne({ where: { id: params.categoryCoverImageId } });
+      const image = await this.uploadService.findImageById(params.categoryCoverImageId);
       if (!image) {
         throw new NotFoundException('Image not found');
       }
@@ -142,7 +155,7 @@ export class CategoryService {
   //   return await this.categoryRepo.update({ id }, params);
   // }
 
-  
+
   async delete(id: number) {
     const myUser = await this.cls.get<UserEntity>('user')
 

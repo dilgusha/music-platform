@@ -6,8 +6,9 @@ import { CreateFollowDto } from "./dto/create-follow.dto";
 import { UserEntity } from "src/database/entities/User.entity";
 import { UserService } from "../user/user.service";
 import { ClsService } from 'nestjs-cls';
-import { FollowStatus } from "src/shared/enum/follow.enum";
+// import { FollowStatus } from "src/shared/enum/follow.enum";
 import { FindParams } from "src/shared/types/find.params";
+import { FollowStatus } from "src/shared/enum/follow.enum";
 
 @Injectable()
 export class FollowService {
@@ -64,7 +65,7 @@ export class FollowService {
 
         const user = await this.userService.findOne({ where: { id: params.userId } });
         if (!user) {
-            throw new NotFoundException('Target user not found');
+            throw new NotFoundException('User not found');
         }
 
         if (user.id === myUser.id) {

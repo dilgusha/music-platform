@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGe
 import { MusicEntity } from "./Music.entity";
 import { ImageEntity } from "./Image.entity";
 import { UserEntity } from "./User.entity";
-import { PlaylistMusicEntity } from "./PlaylistMusic.entity";
+import { PlaylistMusic } from "./PlaylistMusic.entity";
 
 @Entity('playlist')
 export class PlaylistEntity {
@@ -25,10 +25,10 @@ export class PlaylistEntity {
     @ManyToOne(() => UserEntity, (user) => user.id, { nullable: false })
     owner: UserEntity;
 
-    @ManyToMany(() => MusicEntity, (music) => music.id)
-    @JoinTable()
-    musics: MusicEntity[];
+    // @ManyToMany(() => MusicEntity, (music) => music.id)
+    // @JoinTable()
+    // musics: MusicEntity[];
 
-    @OneToMany(() => PlaylistMusicEntity, (playlistMusic) => playlistMusic.playlist)
-    playlistMusics: PlaylistMusicEntity[];
+    @OneToMany(() => PlaylistMusic, playlistMusic => playlistMusic.playlist)
+    playlistMusics: PlaylistMusic[];
 }

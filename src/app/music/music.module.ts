@@ -10,11 +10,10 @@ import { MusicUploadService } from "./musicUpload.service";
 import { UploadModule } from "../upload/upload.module";
 import { PlaylistEntity } from "src/database/entities/Playlist.entity";
 import { PlaylistModule } from "../playlist/playlist.module";
-import { PlaylistMusicEntity } from "src/database/entities/PlaylistMusic.entity";
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([MusicEntity, ImageEntity, CategoryEntity,PlaylistEntity,PlaylistMusicEntity]), 
+        TypeOrmModule.forFeature([MusicEntity, ImageEntity, CategoryEntity,PlaylistEntity]), 
         CategoryModule,
         UploadModule,
         forwardRef(() => PlaylistModule)

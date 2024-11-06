@@ -2,8 +2,8 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, ManyToOn
 import { ImageEntity } from './Image.entity';
 import { CategoryEntity } from './Category.entity';
 import { PlaylistEntity } from './Playlist.entity';
-import { PlaylistMusicEntity } from './PlaylistMusic.entity';
-import { ArtistEntity } from './Artist.entity';
+import { PlaylistMusic } from './PlaylistMusic.entity';
+// import { ArtistEntity } from './Artist.entity';
 import { AlbumEntity } from './Album.entity';
 
 @Entity('music')
@@ -33,14 +33,14 @@ export class MusicEntity {
     @JoinTable()
     categories: CategoryEntity[];
 
-    @ManyToMany(() => PlaylistEntity, (playlist) => playlist.musics)
-    playlists: PlaylistEntity[];
+    // @ManyToMany(() => PlaylistEntity, (playlist) => playlist.musics)
+    // playlists: PlaylistEntity[];
 
-    @OneToMany(() => PlaylistMusicEntity, (playlistMusic) => playlistMusic.music)
-    playlistMusics: PlaylistMusicEntity[];
+    @OneToMany(() => PlaylistMusic, playlistMusic => playlistMusic.music)
+    playlistMusics: PlaylistMusic[];
 
-    @ManyToOne(() => ArtistEntity, (artist) => artist.musics)
-    artist: ArtistEntity;
+    // @ManyToOne(() => ArtistEntity, (artist) => artist.musics)
+    // artist: ArtistEntity;
 
     @ManyToOne(() => AlbumEntity, (album) => album.tracks)
     album: AlbumEntity;

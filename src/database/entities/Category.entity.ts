@@ -24,5 +24,9 @@ export class CategoryEntity extends CommonEntity {
     @JoinColumn()
     categoryCoverImage: ImageEntity;
 
+    // @ManyToOne(() => ImageEntity, { nullable: true })
+    // @JoinColumn({ name: "categoryCoverImageId" })
+    // categoryCoverImage: ImageEntity;
+
 
 }

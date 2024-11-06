@@ -15,7 +15,7 @@ export class UploadService {
         private cls: ClsService
     ) { }
 
-    async uploadImage(req: Request, file: Express.Multer.File) {
+    async uploadImage(req: Request, file: Express.Multer.File,description: string) {
         const myUser = this.cls.get<UserEntity>('user');
         if (!myUser) throw new ForbiddenException('User information not found.');
 
@@ -23,7 +23,8 @@ export class UploadService {
         let image = this.imageRepo.create({
             filename: file.filename,
             url: `${req.protocol}://${req.hostname}${port ? `:${port} ` : ''}/uploads/${file.filename}`,
-            userId: myUser.id
+            userId: myUser.id,
+            description: req.body.description,
         })
 
         // await image.save()

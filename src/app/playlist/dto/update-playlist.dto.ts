@@ -1,7 +1,7 @@
 // update-playlist.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsNumber } from 'class-validator';
 
 export class UpdatePlaylistDto {
     @Type()
@@ -16,9 +16,9 @@ export class UpdatePlaylistDto {
     @IsString()
     description?: string;
 
-    @Type()
     @ApiProperty()
     @IsOptional()
-    @IsString()
-    coverImage?:number
+    @Type(() => Number) 
+    @IsNumber()
+    coverImage?: number;
 }

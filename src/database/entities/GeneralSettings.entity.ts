@@ -26,6 +26,9 @@ export class GeneralSettingsEntity {
     facebookUrl: string;
 
     @Column({ nullable: true })
+    instaUrl: string; 
+
+    @Column({ nullable: true })
     twitterUrl: string;
 
 }
@@ -34,11 +37,11 @@ export class GeneralSettingsEntity {
 
 // {
 //     "logoId": 1,
-//     "sitename": "spotify",
-//     "aboutUs": "ssjefkwjhckwtring",
-//     "phone": "+994 50 123 45 67",
-//     "email": "string@gmail.com",
-//     "instaUrl": "strijshdbwfjsckeng",
-//     "facebookUrl": "strjwdbhcjwhcing",
-//     "twitterUrl": "strisjdcfbhwjhedng"
-//   }
+//    "sitename": "spotify",
+//      "aboutUs": "With Spotify it is easy to find the right music or podcast for every moment  on your phone your computer your tablet and more",
+//      "phone": "+994 50 123 45 67",
+//      "email": "spotify@gmail.com",
+//      "instaUrl": "https://www.instagram.com/spotify",
+//      "facebookUrl": "https://www.facebook.com/Spotify",
+//      "twitterUrl": "https://x.com/spotify"
+//  }

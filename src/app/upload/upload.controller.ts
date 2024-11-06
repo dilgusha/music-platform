@@ -1,4 +1,4 @@
-import { Controller, Delete, FileTypeValidator, MaxFileSizeValidator, Param, ParseFilePipe, Post, Req, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Delete, FileTypeValidator, MaxFileSizeValidator, Param, ParseFilePipe, Post, Req, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { UploadService } from "./upload.service";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from "@nestjs/swagger";
@@ -26,11 +26,16 @@ export class UploadController {
                     type: 'string',
                     format: 'binary',
                 },
+                description: {
+                    type: 'string',
+                    example: 'Image description',
+                },
             },
         },
     })
     uploadImage(
         @Req() req: Request,
+        @Body('description') description: string,
         @UploadedFile(
             new ParseFilePipe(
                 {
@@ -42,7 +47,7 @@ export class UploadController {
                     ],
                 }),)
         file: Express.Multer.File) {
-        return this.uploadService.uploadImage(req, file)
+        return this.uploadService.uploadImage(req, file,description)
     }
 
     @Delete(':id')

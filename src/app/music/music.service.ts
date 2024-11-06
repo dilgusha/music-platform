@@ -10,6 +10,7 @@ import { UserRoles } from "src/shared/enum/user.enum";
 import { ImageEntity } from "src/database/entities/Image.entity";
 import { CategoryService } from "../category/category.service";
 import { MusicUploadService } from "./musicUpload.service";
+import { UploadService } from "../upload/upload.service";
 
 @Injectable()
 export class MusicService {
@@ -22,8 +23,7 @@ export class MusicService {
         private categoryService: CategoryService,
         private cls: ClsService,
         private musicUploadService: MusicUploadService,
-        @InjectRepository(ImageEntity)
-        private readonly imageRepo: Repository<ImageEntity>,
+        private uploadService: UploadService
     ) { }
 
     async find(params?: FindParams<MusicEntity>) {
@@ -57,7 +57,7 @@ export class MusicService {
         } catch (error) {
             throw new BadRequestException('File upload failed.');
         }
-        const coverImage = await this.imageRepo.findOne({ where: { id: params.coverImageId } });
+        const coverImage = await this.uploadService.findImageById( params.coverImageId);
         if (!coverImage) {
             throw new BadRequestException('Invalid cover image ID');
         }
@@ -79,6 +79,18 @@ export class MusicService {
             message: 'Music deleted successfully'
         }
     }
+
+
+
+
+    
+
+    //Music update qalib onu duzelt
+
+
+
+
+
 
 
     // async updateOrderInPlaylist(playlistId: number, orderedMusicIds: number[]) {

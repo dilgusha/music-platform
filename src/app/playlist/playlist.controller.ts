@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, NotFoundException, Param, Post, UseGuards } from "@nestjs/common";
 import { PlaylistService } from "./playlist.service";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { CreatePlaylistDto } from "./dto/create-playlist.dto";
@@ -66,6 +66,16 @@ export class PlaylistController {
         return await this.playlistService.delete(id);
     }
 
+    // @Get(':playlistId/sorted-music')
+    // @ApiOperation({ summary: 'Sort Music in Playlist' })
+    // async getSortedMusic(@Param('playlistId') playlistId: number) {
+    //     try {
+    //         const sortedMusics = await this.playlistService.sortPlaylist(playlistId);
+    //         return sortedMusics;
+    //     } catch (error) {
+    //         throw new NotFoundException('Playlist or musics not found');
+    //     }
+    // }
 
     @Post(':playlistId/shuffle')
     @ApiOperation({ summary: 'Shuffle Music in Playlist' })
@@ -75,22 +85,9 @@ export class PlaylistController {
         return await this.playlistService.shufflePlaylistMusics(playlistId);
     }
 
-
-    
-    // @Get(':playlistId/music')
-    // @ApiOperation({ summary: 'Ordered music playlist' })
-    // async getOrderedMusic(@Param('playlistId') playlistId: number) {
-    //     return this.playlistService.findMusicInPlaylist(playlistId);
-    // }
-
-    // @Post(':playlistId/order')
-    // @ApiOperation({ summary: 'Update Ordered music playlist' })
-    // async updateOrderInPlaylist(
-    //     @Param('playlistId') playlistId: number,
-    //     @Body() orderedMusicIds: number[],
-    // ) {
-    //     return this.playlistService.updateOrderInPlaylist(playlistId, orderedMusicIds);
-    // }
-
-
+    @Get(':id/sorted')
+    @ApiOperation({ summary: 'Sort Playlist by Added Time' })
+    async getPlaylistSortedByAddedTime(@Param('id') playlistId: number): Promise<PlaylistEntity> {
+        return await this.playlistService.sortPlaylistByAddedTime(playlistId);
+    }
 }

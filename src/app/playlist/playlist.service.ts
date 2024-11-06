@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { PlaylistEntity } from "src/database/entities/Playlist.entity";
 import { Repository } from "typeorm";
@@ -9,8 +9,10 @@ import { UserEntity } from "src/database/entities/User.entity";
 import { UpdatePlaylistDto } from "./dto/update-playlist.dto";
 import { MusicService } from "../music/music.service";
 import { FindParams } from "src/shared/types/find.params";
-import { PlaylistMusicEntity } from "src/database/entities/PlaylistMusic.entity";
 import { MusicEntity } from "src/database/entities/Music.entity";
+import { PlaylistMusic } from "src/database/entities/PlaylistMusic.entity";
+import { ImageEntity } from "src/database/entities/Image.entity";
+import { UploadService } from "../upload/upload.service";
 
 @Injectable()
 
@@ -19,8 +21,9 @@ export class PlaylistService {
         @InjectRepository(PlaylistEntity) private playlistRepo: Repository<PlaylistEntity>,
         private musicService: MusicService,
         private cls: ClsService,
-        // @InjectRepository(PlaylistMusicEntity)
-        // private playlistMusicRepo: Repository<PlaylistMusicEntity>
+        @InjectRepository(PlaylistMusic)
+        private readonly playlistMusicRepo: Repository<PlaylistMusic>,
+        private uploadService: UploadService
     ) { }
     async create(params: CreatePlaylistDto): Promise<PlaylistEntity> {
         const myUser = await this.cls.get<UserEntity>('user')
@@ -80,6 +83,13 @@ export class PlaylistService {
             throw new NotFoundException('Playlist not found or you do not have permission to update it');
         }
 
+        if (params.coverImage) {
+            const image = await this.uploadService.findImageById( params.coverImage );
+            if (!image) {
+                throw new BadRequestException('Invalid cover image ID');
+            }
+        }
+
         try {
             Object.assign(playlist, params);
             return await this.playlistRepo.save(playlist);
@@ -99,6 +109,33 @@ export class PlaylistService {
         }
     }
 
+    // async addMusicToPlaylist(playlistId: number, musicId: number): Promise<PlaylistEntity> {
+    //     const myUser = await this.cls.get<UserEntity>('user');
+    //     if (!myUser) {
+    //         throw new UnauthorizedException('User not found');
+    //     }
+
+    //     const playlist = await this.playlistRepo.findOne({
+    //         where: { id: playlistId, owner: { id: myUser.id } },
+    //         relations: ['musics', 'owner']
+    //     });
+    //     if (!playlist) {
+    //         throw new NotFoundException('Playlist not found or you do not have permission to modify it');
+    //     }
+
+    //     const music = await this.musicService.findOne({ where: { id: musicId } });
+    //     if (!music) {
+    //         throw new NotFoundException('Music not found');
+    //     }
+
+    //     if (!playlist.musics) {
+    //         playlist.musics = [];
+    //     }
+    //     playlist.musics.push(music);
+
+    //     return await this.playlistRepo.save(playlist);
+    // }
+
     async addMusicToPlaylist(playlistId: number, musicId: number): Promise<PlaylistEntity> {
         const myUser = await this.cls.get<UserEntity>('user');
         if (!myUser) {
@@ -107,7 +144,7 @@ export class PlaylistService {
 
         const playlist = await this.playlistRepo.findOne({
             where: { id: playlistId, owner: { id: myUser.id } },
-            relations: ['musics', 'owner']
+            relations: ['playlistMusics', 'owner']
         });
         if (!playlist) {
             throw new NotFoundException('Playlist not found or you do not have permission to modify it');
@@ -118,12 +155,24 @@ export class PlaylistService {
             throw new NotFoundException('Music not found');
         }
 
-        if (!playlist.musics) {
-            playlist.musics = [];
-        }
-        playlist.musics.push(music);
+        // const existingEntry = await this.playlistMusicRepo.findOne({
+        //     where: { playlist: { id: playlistId }, music: { id: musicId } }
+        // });
 
-        return await this.playlistRepo.save(playlist);
+        // if (existingEntry) {
+        //     throw new ConflictException('Music is already in the playlist');
+        // }
+
+        const playlistMusic = new PlaylistMusic();
+        playlistMusic.playlist = playlist;
+        playlistMusic.music = music;
+
+        await this.playlistMusicRepo.save(playlistMusic);
+
+        return await this.playlistRepo.findOne({
+            where: { id: playlistId },
+            relations: ['playlistMusics', 'playlistMusics.music', 'owner']
+        });
     }
 
 
@@ -157,89 +206,71 @@ export class PlaylistService {
         if (!myUser) {
             throw new UnauthorizedException('User not found');
         }
-    
         const playlist = await this.playlistRepo.findOne({
             where: { id: playlistId, owner: { id: myUser.id } },
-            relations: ['musics', 'owner']
+            relations: ['playlistMusics', 'playlistMusics.music', 'owner']
         });
-    
-        if (!playlist) {
-            throw new NotFoundException('Playlist not found or you do not have permission to modify it');
-        }
-    
-        if (!playlist.musics || playlist.musics.length === 0) {
+
+        if (!playlist) throw new NotFoundException('Playlist not found or you do not have permission to modify it');
+
+        if (!playlist.playlistMusics || playlist.playlistMusics.length === 0) {
             throw new NotFoundException('No music found in the playlist');
         }
-    
-        const shuffledMusics = this.shuffleArray(playlist.musics);
-    
-        playlist.musics = shuffledMusics;
-    
-        return await this.playlistRepo.save(playlist);
+
+        const shuffledPlaylistMusics = this.shuffleArray(playlist.playlistMusics);
+
+        shuffledPlaylistMusics.forEach((playlistMusic, index) => {
+            playlistMusic.order = index;
+        });
+
+        await this.playlistMusicRepo.save(shuffledPlaylistMusics);
+
+        return await this.playlistRepo.findOne({
+            where: { id: playlistId },
+            relations: ['playlistMusics']
+            // , 'playlistMusics.music', 'owner'
+        });
     }
-    
-    private shuffleArray(array: MusicEntity[]): MusicEntity[] {
+
+    private shuffleArray(array: PlaylistMusic[]): PlaylistMusic[] {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]]; // Değiştirme
+            [array[i], array[j]] = [array[j], array[i]];
         }
         return array;
     }
-    
-    // async shufflePlaylistMusics(playlistId: number): Promise<PlaylistEntity> {
-    //     const myUser = await this.cls.get<UserEntity>('user');
-    //     if (!myUser) {
-    //         throw new UnauthorizedException('User not found');
-    //     }
-    
-    //     const playlist = await this.playlistRepo.findOne({
-    //         where: { id: playlistId, owner: { id: myUser.id } },
-    //         relations: ['musics', 'owner']
-    //     });
+
+
+
+    // Asagidakilar eyni seydi prosta biri queryBuilderdi
+
+    // async sortPlaylist(playlistId: number) {
+    //     const playlist = await this.playlistRepo.createQueryBuilder('playlist')
+    //         .leftJoinAndSelect('playlist.playlistMusics', 'playlistMusics')
+    //         .leftJoinAndSelect('playlistMusics.music', 'music')
+    //         .where('playlist.id = :playlistId', { playlistId })
+    //         .orderBy('playlistMusics.addedAt', 'ASC')
+    //         .getOne();
+
     //     if (!playlist) {
-    //         throw new NotFoundException('Playlist not found or you do not have permission to modify it');
+    //         throw new NotFoundException('Playlist bulunamadı');
     //     }
-    
-    //     // Playlist'teki müzikleri rastgele sıraya göre almak
-    //     const shuffledMusics = await this.playlistRepo
-    //         .createQueryBuilder('music')
-    //         .innerJoinAndSelect('music.playlists', 'playlist', 'playlist.id = :playlistId', { playlistId })
-    //         .orderBy('RANDOM()') // PostgreSQL için rastgele sıralama
-    //         .getMany();
-    
-    //     // Playlist'teki müziklerin sırasını karıştırılmış sıralamaya göre güncellemek
-    //     playlist.musics = shuffledMusics;
-    
-    //     // Güncellenmiş playlist'i kaydetmek
-    //     return await this.playlistRepo.save(playlist);
-    // }
-    
 
-    // async findMusicInPlaylist(playlistId: number) {
-    //     // `order` alanına göre sıralı olarak playlistteki şarkıları getir
-    //     const playlistMusics = await this.playlistMusicRepo.find({
-    //         where: { playlist: { id: playlistId } },
-    //         order: { order: 'ASC' },
-    //         relations: ['music'],
-    //     });
-
-    //     return playlistMusics.map(pm => pm.music);
+    //     return playlist.playlistMusics.map(pm => pm.music);
     // }
 
 
-    // async updateOrderInPlaylist(playlistId: number, orderedMusicIds: number[]) {
-    //     // `orderedMusicIds` sırasına göre playlist içindeki `order` değerlerini güncelle
-    //     for (let i = 0; i < orderedMusicIds.length; i++) {
-    //         const musicId = orderedMusicIds[i];
-    //         await this.playlistMusicRepo.update(
-    //             { playlist: { id: playlistId }, music: { id: musicId } },
-    //             { order: i + 1 } // 1'den başlayan sıralama 
-    //         );
-    //         console.log(orderedMusicIds[i]);
+    async sortPlaylistByAddedTime(playlistId: number): Promise<PlaylistEntity> {
+        const playlist = await this.playlistRepo.findOne({
+            where: { id: playlistId },
+            relations: ['playlistMusics', 'playlistMusics.music'],
+            order: { playlistMusics: { addedAt: 'ASC' } }
+        });
 
-    //     }
-    //     return { status: true, message: 'Playlist reordered successfully' };
+        if (!playlist) throw new NotFoundException('Playlist not found');
 
-    // }
+        return playlist;
+    }
+
 
 }
