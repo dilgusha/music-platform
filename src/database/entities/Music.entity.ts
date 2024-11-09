@@ -5,6 +5,7 @@ import { PlaylistEntity } from './Playlist.entity';
 import { PlaylistMusic } from './PlaylistMusic.entity';
 // import { ArtistEntity } from './Artist.entity';
 import { AlbumEntity } from './Album.entity';
+import { ArtistEntity } from './Artist.entity';
 
 @Entity('music')
 export class MusicEntity {
@@ -39,8 +40,8 @@ export class MusicEntity {
     @OneToMany(() => PlaylistMusic, playlistMusic => playlistMusic.music)
     playlistMusics: PlaylistMusic[];
 
-    // @ManyToOne(() => ArtistEntity, (artist) => artist.musics)
-    // artist: ArtistEntity;
+    @ManyToOne(() => ArtistEntity, (artist) => artist.musics)
+    artist: ArtistEntity;
 
     @ManyToOne(() => AlbumEntity, (album) => album.tracks)
     album: AlbumEntity;

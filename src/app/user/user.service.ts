@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserEntity } from "src/database/entities/User.entity";
 import { FindManyOptions, Repository } from "typeorm";
@@ -7,6 +7,7 @@ import { FindParams } from "src/shared/types/find.params";
 import { ClsService } from "nestjs-cls";
 import { UserRoles } from "src/shared/enum/user.enum";
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { ArtistService } from "../artist/artist.service";
 
 @Injectable()
 
@@ -14,8 +15,13 @@ export class UserService {
     constructor(@InjectRepository(UserEntity)
     private userRepo: Repository<UserEntity>,
         private cls: ClsService,
+      
     ) { }
 
+
+    async saveUser(user: UserEntity): Promise<UserEntity> {
+        return this.userRepo.save(user);
+    }
     async find(params: FindParams<UserEntity>) {
         const myUser = await this.cls.get<UserEntity>('user');
         if (!myUser?.roles.includes(UserRoles.ADMIN)) {

@@ -1,26 +1,30 @@
-// import { Entity, Column, OneToMany, OneToOne } from 'typeorm';
-// import { MusicEntity } from './Music.entity';
-// import { UserEntity } from './User.entity';
-// import { AlbumEntity } from './Album.entity';
-// import { forwardRef } from '@nestjs/common';
+// ArtistEntity.ts
+import { Entity, Column, OneToMany, OneToOne, JoinColumn, PrimaryGeneratedColumn } from 'typeorm';
+import { MusicEntity } from './Music.entity';
+import { AlbumEntity } from './Album.entity';
+import { UserEntity } from './User.entity';
 
-// @Entity('artist')
-// export class ArtistEntity {
-//     // @OneToOne(() => forwardRef(() => UserEntity), (user) => user.artistProfile)
-//     // user: UserEntity;
+@Entity('artist')
+export class ArtistEntity {
+    @PrimaryGeneratedColumn() 
+    id: number;
     
-//     @Column({ nullable: true })
-//     biography: string; 
+    @OneToOne(() => UserEntity)
+    @JoinColumn()
+    user: UserEntity;
 
-//     @OneToMany(() => MusicEntity, (music) => music.artist)
-//     musics: MusicEntity[]; 
+    @Column({ nullable: true })
+    biography: string;
 
-//     @OneToMany(() => AlbumEntity, (album) => album.artist)
-//     albums: AlbumEntity[]; 
+    @OneToMany(() => MusicEntity, (music) => music.artist)
+    musics: MusicEntity[];
 
-//     @Column({ default: false })
-//     isVerified: boolean; 
+    @OneToMany(() => AlbumEntity, (album) => album.artist)
+    albums: AlbumEntity[];
 
-//     @Column({ nullable: true, type: 'simple-array' })
-//     topTracks: string[]; 
-// }
+    @Column({ default: false })
+    isVerified: boolean;
+
+    @Column({ nullable: true, type: 'simple-array' })
+    topTracks: string[];
+}

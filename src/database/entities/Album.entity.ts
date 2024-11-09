@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 // import { ArtistEntity } from './Artist.entity';
 import { MusicEntity } from './Music.entity';
+import { ArtistEntity } from './Artist.entity';
 
 @Entity('album')
 export class AlbumEntity {
@@ -16,8 +17,8 @@ export class AlbumEntity {
     @Column({ nullable: true })
     coverImage: string; 
 
-    // @ManyToOne(() => ArtistEntity, (artist) => artist.albums)
-    // artist: ArtistEntity; 
+    @ManyToOne(() => ArtistEntity, (artist) => artist.albums)
+    artist: ArtistEntity; 
 
     @OneToMany(() => MusicEntity, (music) => music.album)
     tracks: MusicEntity[];

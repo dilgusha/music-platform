@@ -3,12 +3,12 @@ import { UserController } from "./user.controller";
 import { UserService } from "./user.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { UserEntity } from "src/database/entities/User.entity";
+import { ArtistModule } from "../artist/artist.module";
 // import { ArtistModule } from "../artist/artist.module";
 
 @Global()
 @Module({
-    imports: [TypeOrmModule.forFeature([UserEntity]), ],
-    // forwardRef(() => ArtistModule),
+    imports: [TypeOrmModule.forFeature([UserEntity])],
     providers: [UserService],
     controllers: [UserController],
     exports: [UserService],

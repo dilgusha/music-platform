@@ -19,6 +19,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { PlaylistModule } from './app/playlist/playlist.module';
 import { FollowModule } from './app/follow/follow.module';
 import { AdminModule } from './app/admin/admin.module';
+import { ArtistModule } from './app/artist/artist.module';
 
 @Module({
   imports: [
@@ -52,7 +53,8 @@ import { AdminModule } from './app/admin/admin.module';
     MusicModule,
     PlaylistModule,
     FollowModule,
-    AdminModule
+    AdminModule,
+    ArtistModule
   ],
   controllers: [AppController],
   providers: [AppService, {
