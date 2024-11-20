@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { ArrayMinSize, IsArray, IsNumber, IsOptional, IsString, IsUrl, Length } from "class-validator";
+import { IsNumber, IsOptional, IsString, Length } from "class-validator";
 
 export class CreateCategoryDto {
     @Type()
@@ -16,6 +16,10 @@ export class CreateCategoryDto {
     description: string
 
     @ApiProperty({ required: false })
+    @IsOptional()
+    @Type(() => Number)
     @IsNumber()
-    categoryCoverImageId: number;
+    categoryCoverImage?: number;
+
+
 }

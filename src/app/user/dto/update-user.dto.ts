@@ -8,7 +8,7 @@ export class UpdateUserDto {
     @IsNumber()
     @IsOptional()
     @ApiProperty({ required: false })
-    profileImageId: number;
+    profileImage: number;
 
     @Type()
     @IsString()
@@ -16,6 +16,4 @@ export class UpdateUserDto {
     @ApiProperty()
     @IsOptional()
     userName?: string;
-    
-
 }

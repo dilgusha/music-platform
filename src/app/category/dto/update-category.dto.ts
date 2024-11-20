@@ -20,5 +20,6 @@ export class UpdateCategoryDto {
     @ApiProperty({ required: false })
     @IsNumber()
     @IsOptional()
-    categoryCoverImageId?: number;
+    @Type(() => Number)
+    categoryCoverImage?: number;
 }

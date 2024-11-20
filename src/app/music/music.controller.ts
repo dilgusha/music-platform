@@ -8,6 +8,7 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import * as multer from 'multer';
 import { Roles } from "src/common/decorators/roles.decorator";
 import { UserRoles } from "src/shared/enum/user.enum";
+import { UpdateMusicDto } from "./dto/update-music.dto";
 
 
 @Controller('music')
@@ -66,7 +67,6 @@ export class MusicController {
             }
         }
 
-        console.log('Received coverImageId:', createMusicDto.coverImageId);
 
         if (!Array.isArray(createMusicDto.categories)) {
             createMusicDto.categories = [createMusicDto.categories];
@@ -84,10 +84,14 @@ export class MusicController {
     async deleteMusic(@Param('id') id: number) {
         return this.musicService.delete(id)
     }
-    // @Post(':playlistId/order')
-    // async updateOrder(@Param('playlistId') playlistId: number, @Body() orderedMusicIds: number[]) {
-    //     return this.musicService.updateOrderInPlaylist(playlistId, orderedMusicIds);
-    // }
+
+
+    @Post(':id')
+    @ApiOperation({ summary: 'Update music' })
+    @Roles(UserRoles.ADMIN)
+     updateMusic(@Param('id') id: number, @Body() body: UpdateMusicDto) {
+        return  this.musicService.update(id,body)
+    }
 
 
 }

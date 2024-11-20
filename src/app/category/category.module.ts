@@ -5,10 +5,11 @@ import { CategoryController } from "./category.controller";
 import { CategoryService } from "./category.service";
 import { ImageEntity } from "src/database/entities/Image.entity";
 import { UploadModule } from "../upload/upload.module";
+import { SharedModule } from "src/shared/shared.module";
 
 
 @Module({
-    imports: [TypeOrmModule.forFeature([CategoryEntity,ImageEntity]),UploadModule],
+    imports: [TypeOrmModule.forFeature([CategoryEntity,ImageEntity]),UploadModule,SharedModule],
     controllers: [CategoryController],
     providers: [CategoryService],
     exports: [CategoryService],

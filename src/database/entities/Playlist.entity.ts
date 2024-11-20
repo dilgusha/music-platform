@@ -25,9 +25,9 @@ export class PlaylistEntity {
     @ManyToOne(() => UserEntity, (user) => user.id, { nullable: false })
     owner: UserEntity;
 
-    // @ManyToMany(() => MusicEntity, (music) => music.id)
-    // @JoinTable()
-    // musics: MusicEntity[];
+    @ManyToMany(() => MusicEntity, (music) => music.id)
+    @JoinTable()
+    musics: MusicEntity[];
 
     @OneToMany(() => PlaylistMusic, playlistMusic => playlistMusic.playlist)
     playlistMusics: PlaylistMusic[];

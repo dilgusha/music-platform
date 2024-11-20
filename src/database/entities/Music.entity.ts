@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, ManyToOne, OneToMany, OneToOne, JoinColumn } from 'typeorm';
 import { ImageEntity } from './Image.entity';
 import { CategoryEntity } from './Category.entity';
 import { PlaylistEntity } from './Playlist.entity';
@@ -21,7 +21,8 @@ export class MusicEntity {
     @Column()
     duration: number;
 
-    @ManyToOne(() => ImageEntity, { eager: true })
+    @OneToOne(() => ImageEntity, { eager: true })
+    @JoinColumn()
     coverImage: ImageEntity;
 
     @Column({ type: 'date', nullable: true })
@@ -34,8 +35,8 @@ export class MusicEntity {
     @JoinTable()
     categories: CategoryEntity[];
 
-    // @ManyToMany(() => PlaylistEntity, (playlist) => playlist.musics)
-    // playlists: PlaylistEntity[];
+    @ManyToMany(() => PlaylistEntity, (playlist) => playlist.musics)
+    playlists: PlaylistEntity[];
 
     @OneToMany(() => PlaylistMusic, playlistMusic => playlistMusic.music)
     playlistMusics: PlaylistMusic[];

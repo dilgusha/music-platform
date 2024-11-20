@@ -8,9 +8,10 @@ import { PlaylistMusic } from "src/database/entities/PlaylistMusic.entity";
 import { ImageEntity } from "src/database/entities/Image.entity";
 import { UploadService } from "../upload/upload.service";
 import { UploadModule } from "../upload/upload.module";
+import { SharedModule } from "src/shared/shared.module";
 
 @Module({
-    imports: [TypeOrmModule.forFeature([PlaylistEntity,PlaylistMusic]), forwardRef(() => MusicModule),UploadModule],
+    imports: [TypeOrmModule.forFeature([PlaylistEntity,PlaylistMusic]), forwardRef(() => MusicModule),UploadModule,SharedModule],
     controllers: [PlaylistController],
     providers: [PlaylistService],
     exports: [PlaylistService],

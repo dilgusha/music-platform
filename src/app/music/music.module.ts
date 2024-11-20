@@ -10,12 +10,15 @@ import { MusicUploadService } from "./musicUpload.service";
 import { UploadModule } from "../upload/upload.module";
 import { PlaylistEntity } from "src/database/entities/Playlist.entity";
 import { PlaylistModule } from "../playlist/playlist.module";
+import { SharedModule } from "src/shared/shared.module";
+import { ArtistEntity } from "src/database/entities/Artist.entity";
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([MusicEntity, ImageEntity, CategoryEntity,PlaylistEntity]), 
+        TypeOrmModule.forFeature([MusicEntity, ImageEntity, CategoryEntity,PlaylistEntity,ArtistEntity]), 
         CategoryModule,
         UploadModule,
+        SharedModule,
         forwardRef(() => PlaylistModule)
     ],
     controllers: [MusicController],

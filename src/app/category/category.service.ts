@@ -10,6 +10,7 @@ import { ClsService } from "nestjs-cls";
 import { UserRoles } from "src/shared/enum/user.enum";
 import { UpdateCategoryDto } from "./dto/update-category.dto";
 import { UploadService } from "../upload/upload.service";
+import { ImageValidationService } from "src/shared/services/image-validation.service";
 
 @Injectable()
 
@@ -20,7 +21,8 @@ export class CategoryService {
     private uploadService: UploadService,
     // @InjectRepository(ImageEntity)
     // private imageRepo: Repository<ImageEntity>,
-    private cls: ClsService
+    private cls: ClsService,
+    private readonly imageValidationService: ImageValidationService
   ) { }
 
   async find(params?: FindCategoryParams) {
@@ -51,14 +53,10 @@ export class CategoryService {
 
     if (!myUser.roles || !myUser.roles.includes(UserRoles.ADMIN)) throw new ForbiddenException('Only admins can create categories')
 
-    if (params.categoryCoverImageId) {
-      const existingCategory = await this.categoryRepo.findOne({
-        where: { categoryCoverImage: { id: params.categoryCoverImageId } },
-      });
-      if (existingCategory) {
-        throw new BadRequestException('This cover image is already used by another category.');
-      }
+    if (params.categoryCoverImage) {
+      await this.imageValidationService.validateImageUsage(params.categoryCoverImage);
     }
+
     const existingCategory = await this.categoryRepo.findOne({
       where: { categoryName: params.categoryName }
     });
@@ -66,18 +64,25 @@ export class CategoryService {
     if (existingCategory) {
       throw new ConflictException('This category already exists');
     }
+    console.log(params.categoryCoverImage);
 
-    const category = this.categoryRepo.create(params);
+    const category = this.categoryRepo.create({
+      categoryName: params.categoryName,
+      description: params.description
+    });
 
-    if (params.categoryCoverImageId) {
-      const image = await this.uploadService.findImageById(params.categoryCoverImageId);
+    if (params.categoryCoverImage) {
+      const image = await this.uploadService.findImageById(params.categoryCoverImage);
+
       if (image) {
         category.categoryCoverImage = image;
       } else {
         throw new NotFoundException('Image not found');
       }
     }
+
     await this.categoryRepo.save(category);
+
     return category;
   }
 
@@ -93,15 +98,21 @@ export class CategoryService {
       throw new ForbiddenException('Only admins can update categories');
     }
 
+    if (params.categoryCoverImage) {
+      await this.imageValidationService.validateImageUsage(params.categoryCoverImage);
+    }
     const category = await this.categoryRepo.findOne({ where: { id } });
     if (!category) {
       throw new NotFoundException('Category not found');
     }
 
-    let payload: Partial<CategoryEntity> = { ...params };
+    let payload: Partial<CategoryEntity> = {
+      categoryName: params.categoryName ?? category.categoryName,
+      description: params.description ?? category.description,
+    }
 
-    if (params.categoryCoverImageId) {
-      const image = await this.uploadService.findImageById(params.categoryCoverImageId);
+    if (params.categoryCoverImage) {
+      const image = await this.uploadService.findImageById(params.categoryCoverImage);
       if (!image) {
         throw new NotFoundException('Image not found');
       }
@@ -113,47 +124,11 @@ export class CategoryService {
 
     return {
       status: true,
-      message: 'Category updated successfully'
+      message: 'Category updated successfully',
+      data: category
     };
   }
 
-
-  // async updateCategory(id: number, params: UpdateCategoryDto) {
-  //   const myUser = this.cls.get<UserEntity>('user')
-
-  //   if (!myUser) throw new NotFoundException('User not found')
-
-  //   if (!myUser.roles || !myUser.roles.includes(UserRoles.ADMIN)) throw new ForbiddenException('Only admins can update categories')
-
-  //   const category = await this.categoryRepo.findOne({ where: { id } });
-  //   if (!category) {
-  //     throw new NotFoundException('Category not found');
-  //   }
-  //   let payload: Partial<CategoryEntity> = { ...params }
-
-  //   if (params.categoryCoverImageId) {
-  //     const image = await this.imageRepo.findOne({ where: { id: params.categoryCoverImageId } });
-  //     if (!image) {
-  //         throw new NotFoundException('Image not found');
-  //     }
-  //     category.categoryCoverImage = image;
-  //     // Exclude categoryCoverImageId from payload since it's not a valid property in CategoryEntity
-  //     // delete payload.categoryCoverImageId;
-  // }
-
-  //   await this.categoryRepo.save({ ...payload, ...category });
-  //   // await this.categoryRepo.update(id, payload);
-  //   // await this.update(myUser.id, payload)
-
-  //   return {
-  //     status: true,
-  //     message: 'Category updated successfully'
-  //   }
-  // }
-
-  // async update(id: number, params: Partial<CategoryEntity>) {
-  //   return await this.categoryRepo.update({ id }, params);
-  // }
 
 
   async delete(id: number) {

@@ -7,13 +7,6 @@ export class CreateMusicDto {
     @IsString()
     name: string;
 
-    // @ApiProperty({
-    //     type: 'string',
-    //     format: 'binary',
-    //     description: 'Upload the audio file'
-    // })
-    // track: any;
-
     @ApiProperty({ description: 'Music duration' })
     @IsNumber()
     @Type(() => Number)
@@ -34,12 +27,6 @@ export class CreateMusicDto {
     @IsOptional()
     @IsString()
     description?: string;
-
-    // @Type()
-    // @IsNumber({}, { each: true })
-    // @IsOptional()
-    // @ApiProperty({ type: Number, isArray: true })
-    // categories: number[];
 
     @ApiProperty({ type: [Number], description: 'Music categories', required: false })
     @IsOptional()

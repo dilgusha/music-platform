@@ -22,7 +22,7 @@ export class AdminController {
 
     @Post('settings')
     @Roles(UserRoles.ADMIN)
-    async updateSettings(@Body() updateSettingsDto: UpdateSettingsDto) {
-        return this.adminService.updateSettings(updateSettingsDto);
+    async updateSettings(@Body() body: UpdateSettingsDto) {
+        return this.adminService.updateSettings(body);
     }
 }

@@ -13,6 +13,7 @@ import { MusicEntity } from "src/database/entities/Music.entity";
 import { PlaylistMusic } from "src/database/entities/PlaylistMusic.entity";
 import { ImageEntity } from "src/database/entities/Image.entity";
 import { UploadService } from "../upload/upload.service";
+import { ImageValidationService } from "src/shared/services/image-validation.service";
 
 @Injectable()
 
@@ -23,14 +24,14 @@ export class PlaylistService {
         private cls: ClsService,
         @InjectRepository(PlaylistMusic)
         private readonly playlistMusicRepo: Repository<PlaylistMusic>,
-        private uploadService: UploadService
+        private uploadService: UploadService,
+        private readonly imageValidationService: ImageValidationService
     ) { }
     async create(params: CreatePlaylistDto): Promise<PlaylistEntity> {
         const myUser = await this.cls.get<UserEntity>('user')
         if (!myUser) {
             throw new Error('User not found');
         }
-
         const playlist = this.playlistRepo.create({
             playlistName: params.playlistName,
             owner: myUser,
@@ -84,7 +85,10 @@ export class PlaylistService {
         }
 
         if (params.coverImage) {
-            const image = await this.uploadService.findImageById( params.coverImage );
+            await this.imageValidationService.validateImageUsage(params.coverImage);
+        }
+        if (params.coverImage) {
+            const image = await this.uploadService.findImageById(params.coverImage);
             if (!image) {
                 throw new BadRequestException('Invalid cover image ID');
             }
@@ -180,25 +184,46 @@ export class PlaylistService {
         const myUser = await this.cls.get<UserEntity>('user');
         if (!myUser) throw new UnauthorizedException('User not found');
 
-        const playlist = await this.playlistRepo.findOne({
-            where: { id: playlistId, owner: { id: myUser.id } },
-            relations: ['musics', 'owner']
-        });
+        // const playlist = await this.playlistRepo.findOne({
+        //     where: { id: playlistId, owner: { id: myUser.id } },
+        //     relations: ['playlistMusics', 'playlistMusics.music', 'owner'],
+        // });
+        const playlist = await this.playlistRepo
+            .createQueryBuilder('playlist')
+            .leftJoinAndSelect('playlist.owner', 'owner')
+            .leftJoinAndSelect('playlist.playlistMusics', 'playlistMusics') 
+            .leftJoinAndSelect('playlistMusics.music', 'music') 
+            .select([
+                'playlist',      
+                'owner.userName',  
+                'playlistMusics', 
+                'music',           
+            ])
+            .where('playlist.id = :playlistId', { playlistId })
+            .andWhere('owner.id = :ownerId', { ownerId: myUser.id })
+            .getOne();
+
+        if (!playlist) {
+            throw new NotFoundException('Playlist not found or you do not have permission to modify it');
+        }
+
+
         if (!playlist) throw new NotFoundException('Playlist not found or you do not have permission to modify it');
 
-        const music = await this.musicService.findOne({ where: { id: musicId } });
-        if (!music) throw new NotFoundException('Music not found');
+        playlist.owner = { userName: playlist.owner.userName } as any;
 
-        await this.playlistRepo
-            .createQueryBuilder()
-            .relation(PlaylistEntity, 'musics')
-            .of(playlist)
-            .remove(music);
+        if (!playlist.playlistMusics) throw new NotFoundException('Playlist musics not loaded or empty');
 
-        return await this.playlistRepo.findOne({
-            where: { id: playlistId },
-            relations: ['musics', 'owner']
-        });
+        const playlistMusic = playlist.playlistMusics.find((pm) => pm.music.id === musicId);
+        if (!playlistMusic) throw new NotFoundException('Music not found in this playlist');
+
+        await this.playlistMusicRepo.delete(playlistMusic.id);
+
+        return playlist
+        // return await this.playlistRepo.findOne({
+        //     where: { id: playlistId },
+        //     relations: ['musics', 'owner', 'playlistMusics.music'],
+        // });
     }
 
     async shufflePlaylistMusics(playlistId: number): Promise<PlaylistEntity> {
@@ -260,17 +285,48 @@ export class PlaylistService {
     // }
 
 
-    async sortPlaylistByAddedTime(playlistId: number): Promise<PlaylistEntity> {
-        const playlist = await this.playlistRepo.findOne({
-            where: { id: playlistId },
-            relations: ['playlistMusics', 'playlistMusics.music'],
-            order: { playlistMusics: { addedAt: 'ASC' } }
-        });
+    // async sortPlaylistByAddedTime(playlistId: number): Promise<PlaylistEntity> {
+    //     const playlist = await this.playlistRepo.findOne({
+    //         where: { id: playlistId },
+    //         relations: ['playlistMusics', 'playlistMusics.music'],
+    //         order: { playlistMusics: { addedAt: 'ASC' } }
+    //     });
 
+    //     if (!playlist) throw new NotFoundException('Playlist not found');
+    
+
+    //     return await this.playlistRepo.findOne({
+    //         where: { id: playlistId },
+    //         relations: ['playlistMusics.music',]
+    //     });
+    // }
+    async sortPlaylistByAddedTime(playlistId: number): Promise<any> {
+        const playlist = await this.playlistRepo
+            .createQueryBuilder('playlist')
+            .leftJoinAndSelect('playlist.playlistMusics', 'playlistMusics')
+            .leftJoinAndSelect('playlistMusics.music', 'music')
+            .select([
+                'playlist.id',           
+                'playlist.playlistName',        
+                'playlistMusics.addedAt',  
+                'music.id',                
+            ])
+            .where('playlist.id = :playlistId', { playlistId })
+            .orderBy('playlistMusics.addedAt', 'ASC') 
+            .getOne();
+    
         if (!playlist) throw new NotFoundException('Playlist not found');
-
-        return playlist;
+    
+        return {
+            id: playlist.id,
+            name: playlist.playlistName,
+            musics: playlist.playlistMusics.map((playlistMusic) => ({
+                musicId: playlistMusic.music.id, 
+                addedAt: playlistMusic.addedAt,  
+            })),
+        };
     }
+    
 
 
 }

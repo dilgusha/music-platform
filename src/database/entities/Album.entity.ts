@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, OneToOne, JoinColumn } from 'typeorm';
 // import { ArtistEntity } from './Artist.entity';
 import { MusicEntity } from './Music.entity';
 import { ArtistEntity } from './Artist.entity';
+import { ImageEntity } from './Image.entity';
 
 @Entity('album')
 export class AlbumEntity {
@@ -14,8 +15,9 @@ export class AlbumEntity {
     @Column({ nullable: true })
     releaseDate: Date; 
 
-    @Column({ nullable: true })
-    coverImage: string; 
+    @OneToOne(() => ImageEntity, { eager: true })
+    @JoinColumn()
+    coverImage: ImageEntity;
 
     @ManyToOne(() => ArtistEntity, (artist) => artist.albums)
     artist: ArtistEntity; 

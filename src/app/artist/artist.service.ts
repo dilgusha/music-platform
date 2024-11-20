@@ -18,6 +18,10 @@ export class ArtistService {
     ) { }
 
 
+    async findOne(){
+        
+    }
+
     async applyForArtist(dto: ApplyForArtistDto): Promise<ArtistEntity> {
         const myUser = await this.cls.get<UserEntity>('user')
         if (!myUser) throw new ForbiddenException('User not found')
@@ -42,7 +46,6 @@ export class ArtistService {
         }
     }
 
-    // Admin'in onayladığı sanatçıları doğrulama
     async verifyArtist(artistId: number): Promise<ArtistEntity> {
         const artist = await this.artistRepo.findOne({
             where: { id: artistId },

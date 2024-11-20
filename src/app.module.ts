@@ -20,6 +20,7 @@ import { PlaylistModule } from './app/playlist/playlist.module';
 import { FollowModule } from './app/follow/follow.module';
 import { AdminModule } from './app/admin/admin.module';
 import { ArtistModule } from './app/artist/artist.module';
+import { AlbumModule } from './app/album/album.module';
 
 @Module({
   imports: [
@@ -54,7 +55,8 @@ import { ArtistModule } from './app/artist/artist.module';
     PlaylistModule,
     FollowModule,
     AdminModule,
-    ArtistModule
+    ArtistModule,
+    AlbumModule
   ],
   controllers: [AppController],
   providers: [AppService, {

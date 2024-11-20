@@ -7,6 +7,7 @@ import { ImageEntity } from "src/database/entities/Image.entity";
 import { ClsService } from "nestjs-cls";
 import { UserEntity } from "src/database/entities/User.entity";
 import { UserRoles } from "src/shared/enum/user.enum";
+import { ImageValidationService } from "src/shared/services/image-validation.service";
 
 @Injectable()
 export class AdminService {
@@ -15,7 +16,8 @@ export class AdminService {
         private generalSettingsRepo: Repository<GeneralSettingsEntity>,
         @InjectRepository(ImageEntity)
         private readonly imageRepo: Repository<ImageEntity>,
-        private cls: ClsService
+        private cls: ClsService,
+        private readonly imageValidationService:ImageValidationService
     ) { }
 
 
@@ -45,6 +47,10 @@ export class AdminService {
             throw new ForbiddenException('Only admins can create music');
         }
 
+        if (params.logoId) {
+            await this.imageValidationService.validateImageUsage(params.logoId);
+        }
+        
         let settings = await this.generalSettingsRepo.findOne({ where: { id: 1 } });
 
         if (!settings) {

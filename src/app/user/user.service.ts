@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserEntity } from "src/database/entities/User.entity";
 import { FindManyOptions, Repository } from "typeorm";
@@ -8,6 +8,8 @@ import { ClsService } from "nestjs-cls";
 import { UserRoles } from "src/shared/enum/user.enum";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { ArtistService } from "../artist/artist.service";
+import { UploadService } from "../upload/upload.service";
+import { ImageValidationService } from "src/shared/services/image-validation.service";
 
 @Injectable()
 
@@ -15,7 +17,9 @@ export class UserService {
     constructor(@InjectRepository(UserEntity)
     private userRepo: Repository<UserEntity>,
         private cls: ClsService,
-      
+        private uploadService: UploadService,
+        private readonly imageValidationService: ImageValidationService
+
     ) { }
 
 
@@ -24,6 +28,7 @@ export class UserService {
     }
     async find(params: FindParams<UserEntity>) {
         const myUser = await this.cls.get<UserEntity>('user');
+        if (!myUser) throw new NotFoundException('User not found')
         if (!myUser?.roles.includes(UserRoles.ADMIN)) {
             throw new ForbiddenException('Only admins can view users');
         }
@@ -104,6 +109,9 @@ export class UserService {
         if (!myUser) {
             throw new ForbiddenException('User not authenticated');
         }
+        if (params.profileImage) {
+            await this.imageValidationService.validateImageUsage(params.profileImage, targetUserId);
+        }
 
         const userId = targetUserId || myUser.id;
 
@@ -127,6 +135,12 @@ export class UserService {
             const userNameExists = await this.findOne({ where: { userName: params.userName } });
             if (userNameExists) {
                 throw new ConflictException("Username already exists");
+            }
+        }
+        if (params.profileImage) {
+            const image = await this.uploadService.findImageById(params.profileImage);
+            if (!image) {
+                throw new BadRequestException('Profile image not found');
             }
         }
 
