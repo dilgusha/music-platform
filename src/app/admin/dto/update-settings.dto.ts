@@ -13,22 +13,26 @@ export class UpdateSettingsDto {
     @ApiProperty()
     @IsString()
     @Length(3, 30)
+    @IsOptional()
     sitename?: string;
 
     @Type()
     @ApiProperty()
     @IsString()
     @Length(10, 700)
+    @IsOptional()
     aboutUs?: string;
 
     @Type()
     @ApiProperty({ description: 'Phone number in the format +994 50 123 45 67' })
+    @IsOptional()
     @IsString()
     @Matches(/^\+\d{3} \d{2} \d{3} \d{2} \d{2}$/, { message: 'Phone number must be in the format +994 50 123 45 67' })
     phone?: string;
 
     @Type()
     @ApiProperty({ description: 'Primary email address' })
+    @IsOptional()
     @IsEmail()
     email?: string;
 

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { AdminService } from "./admin.service";
 import { UpdateSettingsDto } from "./dto/update-settings.dto";
@@ -24,5 +24,17 @@ export class AdminController {
     @Roles(UserRoles.ADMIN)
     async updateSettings(@Body() body: UpdateSettingsDto) {
         return this.adminService.updateSettings(body);
+    }
+
+    @Get('pending-artists')
+    @Roles(UserRoles.ADMIN)
+    async getPendingArtists() {
+        return await this.adminService.getAllArtistRequest();
+    }
+
+    @Post('verify-artist/:id')
+    @Roles(UserRoles.ADMIN)
+    async verifyArtist(@Param('id') id: number) {
+        return await this.adminService.verifyArtist(id);
     }
 }

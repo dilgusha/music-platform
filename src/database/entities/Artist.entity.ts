@@ -6,12 +6,15 @@ import { UserEntity } from './User.entity';
 
 @Entity('artist')
 export class ArtistEntity {
-    @PrimaryGeneratedColumn() 
+    @PrimaryGeneratedColumn()
     id: number;
-    
+
     @OneToOne(() => UserEntity)
     @JoinColumn()
     user: UserEntity;
+
+    @Column()
+    artistName: string
 
     @Column({ nullable: true })
     biography: string;
@@ -26,5 +29,11 @@ export class ArtistEntity {
     isVerified: boolean;
 
     @Column({ nullable: true, type: 'simple-array' })
-    topTracks: string[];
+    topTracks: number[];
+
+    @Column('text', { array: true, nullable: true })
+    socialLinks?: string[];
+
+    @Column()
+    genre:string
 }

@@ -6,6 +6,7 @@ import { PlaylistEntity } from "./Playlist.entity";
 import { FollowEntity } from "./Follow.entity";
 import { CommonEntity } from "./Common.entity";
 import { Gender, UserRoles } from "src/shared/enum/user.enum";
+import { ArtistEntity } from "./Artist.entity";
 
 
 
@@ -27,7 +28,7 @@ export class UserEntity extends CommonEntity {
     @Column()
     password: string;
 
-    
+
     @Column({ default: 0 })
     followerCount: number;
 
@@ -57,11 +58,13 @@ export class UserEntity extends CommonEntity {
     @OneToOne(() => ImageEntity, { eager: true })
     @JoinColumn()
     profileImage: ImageEntity;
-    
+
 
     @OneToMany(() => PlaylistEntity, (playlist) => playlist.owner)
     playlists: PlaylistEntity[];
 
+    @OneToOne(() => ArtistEntity, (artist) => artist.user, { nullable: true })
+    artist: ArtistEntity;
 
     @OneToMany(() => FollowEntity, (follow) => (follow.followedUser))
     followeds: FollowEntity[]

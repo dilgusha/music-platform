@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { GeneralSettingsEntity } from "src/database/entities/GeneralSettings.entity";
 import { Repository } from "typeorm";
@@ -8,6 +8,9 @@ import { ClsService } from "nestjs-cls";
 import { UserEntity } from "src/database/entities/User.entity";
 import { UserRoles } from "src/shared/enum/user.enum";
 import { ImageValidationService } from "src/shared/services/image-validation.service";
+import { ArtistService } from "../artist/artist.service";
+import { ArtistEntity } from "src/database/entities/Artist.entity";
+import { UserService } from "../user/user.service";
 
 @Injectable()
 export class AdminService {
@@ -17,12 +20,13 @@ export class AdminService {
         @InjectRepository(ImageEntity)
         private readonly imageRepo: Repository<ImageEntity>,
         private cls: ClsService,
-        private readonly imageValidationService:ImageValidationService
+        private readonly imageValidationService: ImageValidationService,
+        private artistService: ArtistService,
+        private userService: UserService
     ) { }
 
 
-//Admin olub olmadigini tapa bilmir myUseri yeni cls de sorun var onu duzelt
-
+    //Admin olub olmadigini tapa bilmir myUseri yeni cls de sorun var onu duzelt
 
     async getSettings(): Promise<GeneralSettingsEntity> {
         const myUser = await this.cls.get<UserEntity>('user');
@@ -50,7 +54,7 @@ export class AdminService {
         if (params.logoId) {
             await this.imageValidationService.validateImageUsage(params.logoId);
         }
-        
+
         let settings = await this.generalSettingsRepo.findOne({ where: { id: 1 } });
 
         if (!settings) {
@@ -70,5 +74,39 @@ export class AdminService {
 
         return await this.generalSettingsRepo.save(updatedSettings);
     }
+
+
+    async verifyArtist(artistId: number): Promise<ArtistEntity> {
+        const myUser = await this.cls.get<UserEntity>('user');
+        if (!myUser || !myUser.roles.includes(UserRoles.ADMIN)) {
+            throw new ForbiddenException('Only admins can verify artists');
+        }
+
+        const artist = await this.artistService.findById(artistId); 
+        if (!artist) throw new NotFoundException('Artist not found');
+
+        if (artist.isVerified) throw new BadRequestException('Artist is already verified');
+
+        const user = artist.user;
+        if (user && user.roles.includes(UserRoles.USER) && !user.roles.includes(UserRoles.ARTIST)) {
+            user.roles = [...user.roles, UserRoles.ARTIST]; 
+            await this.userService.saveUser(user);
+        }
+
+        artist.isVerified = true;
+        return await this.artistService.save(artist); 
+    }
+
+
+    async getAllArtistRequest(): Promise<ArtistEntity[]> {
+        const myUser = await this.cls.get<UserEntity>('user');
+        if (!myUser || !myUser.roles.includes(UserRoles.ADMIN)) {
+            throw new ForbiddenException('Only admins can view artist applications');
+        }
+
+        return await this.artistService.findPending();
+    }
+
+
 
 }

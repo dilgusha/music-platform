@@ -21,32 +21,77 @@ export class FollowService {
     ) { }
 
 
+    // async repeatCode(userId: number, followedMyUser: boolean) {
+    //     let myUser = await this.cls.get<Promise<UserEntity>>('user')
+    //     let user = await this.userService.findOne({ where: { id: userId } });
+    //     if (!user) throw new NotFoundException('User not found');
+    //     let whereOption;
+    //     if (followedMyUser) {
+    //         whereOption = {
+    //             followerUser: { id: user.id },
+    //             followedUser: { id: myUser.id },
+    //         };
+    //     } else {
+    //         whereOption = {
+    //             followedUser: { id: user.id },
+    //             followerUser: { id: myUser.id },
+    //         };
+    //     }
+    //     console.log('Where Option:', JSON.stringify(whereOption));
+
+
+    //     const follow = await this.followRepo.createQueryBuilder('follow')
+    //         .leftJoinAndSelect('follow.followerUser', 'followerUser')
+    //         .leftJoinAndSelect('follow.followedUser', 'followedUser')
+    //         .where('followerUser.id = :followerId', { followerId: user.id })
+    //         .andWhere('followedUser.id = :followedId', { followedId: myUser.id })
+    //         .getOne();
+
+    //     console.log('Query Result:', follow);
+
+    //     if (!follow) {
+    //         console.log('Follow not found:', whereOption);
+    //         throw new NotFoundException('Follow request not found');
+    //     }
+    //     return { myUser, user, follow };
+
+    // }
+
     async repeatCode(userId: number, followedMyUser: boolean) {
-        let myUser = await this.cls.get<Promise<UserEntity>>('user')
-        let user = await this.userService.findOne({ where: { id: userId } });
+        const myUser = await this.cls.get<Promise<UserEntity>>('user');
+        const user = await this.userService.findOne({ where: { id: userId } });
+    
         if (!user) throw new NotFoundException('User not found');
-        let whereOption;
-        if (followedMyUser) {
-            whereOption = {
-                followerUser: { id: user.id },
-                followedUser: { id: myUser.id },
-            }
+    
+        const whereOption = followedMyUser
+            ? {
+                  followerUser: { id: myUser.id },  
+                  followedUser: { id: user.id },    
+              }
+            : {
+                  followerUser: { id: user.id },    
+                  followedUser: { id: myUser.id }, 
+              };
+    
+        // console.log('Where Option:', JSON.stringify(whereOption));
+    
+        const follow = await this.followRepo.createQueryBuilder('follow')
+            .leftJoinAndSelect('follow.followerUser', 'followerUser')
+            .leftJoinAndSelect('follow.followedUser', 'followedUser')
+            .where('followerUser.id = :followerId', { followerId: whereOption.followerUser.id })
+            .andWhere('followedUser.id = :followedId', { followedId: whereOption.followedUser.id })
+            .getOne();
+    
+        // console.log('Query Result:', follow);
+    
+        if (!follow) {
+            console.log('Follow not found:', whereOption);
+            throw new NotFoundException('Follow request not found');
         }
-        else {
-            whereOption = {
-                followedUser: { id: user.id },
-                followerUser: { id: myUser.id },
-            }
-        }
-
-        let follow = await this.findOne({
-            where: whereOption
-        });
-        if (!follow) throw new NotFoundException('Follow request not found');
+    
         return { myUser, user, follow };
-
     }
-
+    
 
     async findOne(params: Omit<FindParams<FollowEntity>, 'limit' | 'page'>) {
         const { where, select, relations } = params
@@ -144,7 +189,11 @@ export class FollowService {
             await Promise.all([myUser.save(), user.save()])
         }
 
-        await follow.remove()
+        await follow.remove();
+        return {
+            status: true,
+            message: 'You have successfully unfollow'
+        }
     }
 
 

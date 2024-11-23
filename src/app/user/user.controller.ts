@@ -1,11 +1,8 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, Post, UseGuards } from "@nestjs/common";
-import { CreateUserDto } from "./dto/create.user.dto";
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { AuthGuard } from "src/guards/auth.guard";
-import { UserEntity } from "src/database/entities/User.entity";
 import { ClsService } from "nestjs-cls";
-import { USER_PROFILE_SELECT, USER_PUBLIC_SELECT } from "./user-select";
 import { Roles } from "src/common/decorators/roles.decorator";
 import { UserRoles } from "src/shared/enum/user.enum";
 import { UpdateUserDto } from "./dto/update-user.dto";
@@ -27,24 +24,20 @@ export class UserController {
     async findAll() {
         return this.userService.find({});
     }
-    @Get('/myProfile')
-    @ApiOperation({ summary: 'User view own profile' })
-    async myProfile() {
-        let user = await this.cls.get<UserEntity>('user')
-        return this.userService.findOne({ where: { id: user.id }, select: USER_PROFILE_SELECT });
-    }
 
     @Get('/profile/:id')
     @ApiOperation({ summary: 'Users view other profile' })
     async userProfile(@Param('id') id: number) {
-        let user = await this.userService.findOne({
-            where: { id },
-            select: USER_PUBLIC_SELECT
-        });
-
-        if (!user) throw new NotFoundException();
-        return user;
+        return await this.userService.getUserProfile(id)
     }
+
+
+    @Get('/myProfile')
+    @ApiOperation({ summary: 'User view own profile' })
+    async myProfile() {
+        return await this.userService.getMyProfile();
+    }
+
 
     @Post('profile')
     @ApiOperation({ summary: 'User Update own profile' })

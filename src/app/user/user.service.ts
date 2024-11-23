@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserEntity } from "src/database/entities/User.entity";
 import { FindManyOptions, Repository } from "typeorm";
@@ -7,9 +7,9 @@ import { FindParams } from "src/shared/types/find.params";
 import { ClsService } from "nestjs-cls";
 import { UserRoles } from "src/shared/enum/user.enum";
 import { UpdateUserDto } from "./dto/update-user.dto";
-import { ArtistService } from "../artist/artist.service";
 import { UploadService } from "../upload/upload.service";
 import { ImageValidationService } from "src/shared/services/image-validation.service";
+import { USER_PROFILE_SELECT } from "./user-select";
 
 @Injectable()
 
@@ -44,6 +44,26 @@ export class UserService {
         return this.userRepo.findOne({ where, relations, select })
     }
 
+    findById(id: number) {
+        return this.userRepo.findOne({
+            where: {
+                id
+            },
+            relations: ['roles'],
+        })
+    }
+
+    async getMyProfile(): Promise<UserEntity | null> {
+        const myUser = await this.cls.get<UserEntity>('user');
+        if (!myUser) throw new NotFoundException('User not found');
+        return this.findOne({ where: { id: myUser.id }, select: USER_PROFILE_SELECT, relations: ['playlists', 'profileImage', 'artist'] });
+    }
+
+    async getUserProfile(id: number): Promise<UserEntity | null> {
+        const myUser = await this.cls.get<UserEntity>('user');
+        if (!myUser) throw new NotFoundException('User not found');
+        return this.findOne({ where: { id }, select: USER_PROFILE_SELECT, relations: ['playlists', 'profileImage'] });
+    }
 
     async create(params: CreateUserDto) {
         let checkUserName = await this.findOne({ where: { userName: params.userName } });

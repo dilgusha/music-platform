@@ -3,39 +3,32 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsString, IsArray, IsNotEmpty, IsOptional, IsUrl } from 'class-validator';
 
 export class ApplyForArtistDto {
+    @ApiProperty({ description: 'Artist Name', required: true })
+    @IsString()
+    @IsNotEmpty()
+    artistName: string;
+
+    // @ApiProperty({ description: '' })
     // @IsNumber()
-    // @IsNotEmpty()
     // userId: number;
 
-    // @IsString()
-    // @IsNotEmpty()
-    // artistName: string;  // Sanatçı adı, Spotify for Artists gibi platformlarda yaygın bir gerekliliktir
-
-    @ApiProperty({ description: 'Başvuru yapan kullanıcının ID numarası' })
-    @IsNumber()
-    userId: number;
-
-    @ApiProperty({ description: 'Sanatçının biyografisi', required: false })
+    @ApiProperty({ description: 'Artist Bio', required: false })
     @IsString()
     @IsOptional()
     biography?: string;
 
-    @ApiProperty({ description: 'Sanatçının öne çıkan şarkıları', required: false, type: [String] })
+    @ApiProperty({ description: 'Artist song ids', required: false, type: [Number] })
+    @IsOptional()
+    @IsNumber({}, { each: true })
+    topTracks?: number[];
+
+    @ApiProperty({ description: 'Artist social media links', required: false })
     @IsArray()
     @IsOptional()
-    @IsString({ each: true })
-    topTracks?: string[];  // Sanatçının öne çıkan şarkıları
+    socialLinks?: string[];
 
-    // @IsUrl()
-    // @IsOptional()
-    // website?: string;  // Sanatçının kişisel veya resmi web sitesi, isteğe bağlıdır
-
-    // @IsArray()
-    // @IsOptional()
-    // @IsUrl()
-    // socialLinks?: string[];  // Sosyal medya bağlantıları, isteğe bağlı ama doğrulama için faydalı
-
-    // @IsString()
-    // @IsOptional()
-    // genre?: string;  // Sanatçının müzik tarzı veya türü
+    @ApiProperty({ description: 'Artist song genre', required: false })
+    @IsString()
+    @IsOptional()
+    genre?: string;
 }

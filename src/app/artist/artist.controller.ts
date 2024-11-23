@@ -15,17 +15,19 @@ export class ArtistController {
     @Post('apply')
     async applyForArtist(
         @Body() applyForArtistDto: ApplyForArtistDto,
-        @Req() request: any 
+        @Req() request: any
     ) {
         console.log('Authenticated user:', request.user);
         const user = request.user as UserEntity;
         return this.artistService.applyForArtist(applyForArtistDto);
     }
 
-    @Post('verify/:artistId')
-    @UseGuards(AuthGuard)
-    async verifyArtist(@Param('artistId') artistId: number) {
-        return this.artistService.verifyArtist(artistId);
-    }
+    //Admin service-e kocuruldu
+
+    // @Post('verify/:artistId')
+    // @UseGuards(AuthGuard)
+    // async verifyArtist(@Param('artistId') artistId: number) {
+    //     return this.artistService.verifyArtist(artistId);
+    // }
 }
 

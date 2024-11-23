@@ -18,53 +18,105 @@ export class ArtistService {
     ) { }
 
 
-    async findOne(){
-        
+    async findById(artistId: number): Promise<ArtistEntity | null> {
+        return await this.artistRepo.findOne({
+            where: { id: artistId },
+            relations: ['user'],
+        });
+    }
+
+    async save(artist: ArtistEntity): Promise<ArtistEntity> {
+        return await this.artistRepo.save(artist);
+    }
+
+    async findPending(): Promise<ArtistEntity[]> {
+        return await this.artistRepo.find({
+            where: { isVerified: false },
+            relations: ['user'],
+        });
     }
 
     async applyForArtist(dto: ApplyForArtistDto): Promise<ArtistEntity> {
-        const myUser = await this.cls.get<UserEntity>('user')
-        if (!myUser) throw new ForbiddenException('User not found')
-        console.log('User:', myUser);
-        console.log('User Roles:', myUser?.roles);
+        const myUser = await this.cls.get<UserEntity>('user');
+        if (!myUser) throw new ForbiddenException('User not found');
 
-        if (!myUser || !Array.isArray(myUser.roles) || !myUser.roles.includes(UserRoles.USER)) {
+        if (!myUser.roles.includes(UserRoles.USER)) {
             throw new UnauthorizedException('You are not eligible to apply for an artist profile');
         }
 
-        const artist = new ArtistEntity();
-        artist.user = myUser;
-        artist.biography = dto.biography;
-        artist.topTracks = dto.topTracks;
-        artist.isVerified = false; 
-
         try {
-            return await this.artistRepo.save(artist);
+            const artist = await this.artistRepo.createQueryBuilder()
+                .insert()
+                .into(ArtistEntity)
+                .values({
+                    artistName: dto.artistName,
+                    biography: dto.biography,
+                    topTracks: dto.topTracks,
+                    socialLinks: dto.socialLinks,
+                    genre: dto.genre,
+                    user: { id: myUser.id },
+                    isVerified: false,
+                })
+                .execute();
+
+            return this.artistRepo.createQueryBuilder('artist')
+                .where('artist.id = :id', { id: artist.identifiers[0].id })
+                .leftJoinAndSelect('artist.user', 'user')
+                .getOne();
         } catch (error) {
             console.error('Error saving artist:', error);
             throw new Error('Failed to save artist');
         }
     }
 
-    async verifyArtist(artistId: number): Promise<ArtistEntity> {
-        const artist = await this.artistRepo.findOne({
-            where: { id: artistId },
-            relations: ['user'],
-        });
 
-        if (!artist) {
-            throw new NotFoundException('Artist not found');
-        }
+    // async applyForArtist(dto: ApplyForArtistDto): Promise<ArtistEntity> {
+    //     const myUser = await this.cls.get<UserEntity>('user')
+    //     if (!myUser) throw new ForbiddenException('User not found')
+    //     console.log('User:', myUser);
+    //     console.log('User Roles:', myUser?.roles);
 
-        const user = artist.user;
-        if (user && user.roles.includes(UserRoles.USER) && !user.roles.includes(UserRoles.ARTIST)) {
-            user.roles=[UserRoles.ARTIST]
-            await this.userService.saveUser(user)
-        }
+    //     if (!myUser || !Array.isArray(myUser.roles) || !myUser.roles.includes(UserRoles.USER)) {
+    //         throw new UnauthorizedException('You are not eligible to apply for an artist profile');
+    //     }
 
-        artist.isVerified = true;
-        return await this.artistRepo.save(artist);
-    }
+    //     const artist = new ArtistEntity();
+    //     artist.user = myUser;
+    //     artist.biography = dto.biography;
+    //     // artist.topTracks = dto.topTracks;
+    //     artist.isVerified = false;
+
+    //     try {
+    //         return await this.artistRepo.save(artist);
+    //     } catch (error) {
+    //         console.error('Error saving artist:', error);
+    //         throw new Error('Failed to save artist');
+    //     }
+    // }
+
+
+
+    // Kocuruldu admin service-e
+    
+    // async verifyArtist(artistId: number): Promise<ArtistEntity> {
+    //     const artist = await this.artistRepo.findOne({
+    //         where: { id: artistId },
+    //         relations: ['user'],
+    //     });
+
+    //     if (!artist) {
+    //         throw new NotFoundException('Artist not found');
+    //     }
+
+    //     const user = artist.user;
+    //     if (user && user.roles.includes(UserRoles.USER) && !user.roles.includes(UserRoles.ARTIST)) {
+    //         user.roles = [UserRoles.ARTIST]
+    //         await this.userService.saveUser(user)
+    //     }
+
+    //     artist.isVerified = true;
+    //     return await this.artistRepo.save(artist);
+    // }
 
 
 }
