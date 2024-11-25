@@ -203,10 +203,6 @@ export class PlaylistService {
             .andWhere('owner.id = :ownerId', { ownerId: myUser.id })
             .getOne();
 
-        if (!playlist) {
-            throw new NotFoundException('Playlist not found or you do not have permission to modify it');
-        }
-
 
         if (!playlist) throw new NotFoundException('Playlist not found or you do not have permission to modify it');
 

@@ -41,10 +41,10 @@ export class MusicEntity {
     @OneToMany(() => PlaylistMusic, playlistMusic => playlistMusic.music)
     playlistMusics: PlaylistMusic[];
 
-    @ManyToOne(() => ArtistEntity, (artist) => artist.musics)
+    @ManyToOne(() => ArtistEntity, (artist) => artist.musics, { onDelete: 'CASCADE' })
     artist: ArtistEntity;
 
-    @ManyToOne(() => AlbumEntity, (album) => album.tracks)
+    @ManyToOne(() => AlbumEntity, (album) => album.tracks, { onDelete: 'CASCADE' })
     album: AlbumEntity;
 
 

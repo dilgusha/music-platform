@@ -12,9 +12,9 @@ import { MusicEntity } from 'src/database/entities/Music.entity';
 
 @Injectable()
 export class ImageValidationService {
-    constructor(
+    constructor( 
         @InjectRepository(UserEntity) private userRepo: Repository<UserEntity>,
-        @InjectRepository(CategoryEntity) private categoryRepo: Repository<CategoryEntity>,
+        @InjectRepository(CategoryEntity) private categoryRepo: Repository<CategoryEntity> ,
         @InjectRepository(PlaylistEntity) private playlistRepo: Repository<PlaylistEntity>,
         @InjectRepository(AlbumEntity) private albumRepo: Repository<AlbumEntity>,
         @InjectRepository(GeneralSettingsEntity) private generalSettingsRepo: Repository<GeneralSettingsEntity>,

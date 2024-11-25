@@ -63,7 +63,7 @@ export class UserEntity extends CommonEntity {
     @OneToMany(() => PlaylistEntity, (playlist) => playlist.owner)
     playlists: PlaylistEntity[];
 
-    @OneToOne(() => ArtistEntity, (artist) => artist.user, { nullable: true })
+    @OneToOne(() => ArtistEntity, (artist) => artist.user, { nullable: true, onDelete: 'CASCADE' },)
     artist: ArtistEntity;
 
     @OneToMany(() => FollowEntity, (follow) => (follow.followedUser))

@@ -10,6 +10,7 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { UploadService } from "../upload/upload.service";
 import { ImageValidationService } from "src/shared/services/image-validation.service";
 import { USER_PROFILE_SELECT } from "./user-select";
+import { ArtistEntity } from "src/database/entities/Artist.entity";
 
 @Injectable()
 
@@ -18,7 +19,9 @@ export class UserService {
     private userRepo: Repository<UserEntity>,
         private cls: ClsService,
         private uploadService: UploadService,
-        private readonly imageValidationService: ImageValidationService
+        private readonly imageValidationService: ImageValidationService,
+        @InjectRepository(ArtistEntity)
+        private artistRepo: Repository<ArtistEntity>
 
     ) { }
 
@@ -179,7 +182,6 @@ export class UserService {
         if (!myUser) {
             throw new ForbiddenException('User not authenticated');
         }
-
         const userId = targetUserId || myUser.id;
 
         if (userId !== myUser.id && !myUser.roles.includes(UserRoles.ADMIN)) {
@@ -190,6 +192,7 @@ export class UserService {
         if (!user) {
             throw new NotFoundException("User not found");
         }
+        await this.artistRepo.delete({ user: { id: userId } });
 
         await this.userRepo.remove(user);
 

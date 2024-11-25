@@ -1,5 +1,4 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, OneToOne, JoinColumn } from 'typeorm';
-// import { ArtistEntity } from './Artist.entity';
 import { MusicEntity } from './Music.entity';
 import { ArtistEntity } from './Artist.entity';
 import { ImageEntity } from './Image.entity';
@@ -19,7 +18,7 @@ export class AlbumEntity {
     @JoinColumn()
     coverImage: ImageEntity;
 
-    @ManyToOne(() => ArtistEntity, (artist) => artist.albums)
+    @ManyToOne(() => ArtistEntity, (artist) => artist.albums,{ onDelete: 'CASCADE' })
     artist: ArtistEntity; 
 
     @OneToMany(() => MusicEntity, (music) => music.album)

@@ -6,7 +6,6 @@ import { CreateFollowDto } from "./dto/create-follow.dto";
 import { UserEntity } from "src/database/entities/User.entity";
 import { UserService } from "../user/user.service";
 import { ClsService } from 'nestjs-cls';
-// import { FollowStatus } from "src/shared/enum/follow.enum";
 import { FindParams } from "src/shared/types/find.params";
 import { FollowStatus } from "src/shared/enum/follow.enum";
 

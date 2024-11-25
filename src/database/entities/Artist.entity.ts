@@ -15,7 +15,7 @@ export class ArtistEntity {
 
     @Column()
     artistName: string
-
+ 
     @Column({ nullable: true })
     biography: string;
 
