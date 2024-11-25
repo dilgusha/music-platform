@@ -9,10 +9,9 @@ export class UpdateALbumDto {
     @IsString()
     albumName?: string;
 
-    @Type()
-    @IsOptional()
     @ApiProperty()
-    @IsDateString()
+    @IsOptional()
+    @Type(() => Date)
     releaseDate?: Date;
 
     @ApiProperty()

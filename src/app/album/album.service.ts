@@ -5,13 +5,14 @@ import { AlbumEntity } from "src/database/entities/Album.entity";
 import { UserEntity } from "src/database/entities/User.entity";
 import { UserRoles } from "src/shared/enum/user.enum";
 import { FindOneParams, FindParams } from "src/shared/types/find.params";
-import { Repository } from "typeorm";
+import { Not, Repository } from "typeorm";
 import { MusicService } from "../music/music.service";
 import { CreateAlbumDto } from "./dto/create-album.dto";
 import { NotFoundError } from "rxjs";
 import { UploadService } from "../upload/upload.service";
 import { UpdateALbumDto } from "./dto/update-album.dto";
 import { ImageValidationService } from "src/shared/services/image-validation.service";
+import { ArtistService } from "../artist/artist.service";
 
 @Injectable()
 
@@ -22,7 +23,8 @@ export class AlbumService {
         private cls: ClsService,
         private uploadService: UploadService,
         private musicService: MusicService,
-        private readonly imageValidationService: ImageValidationService
+        private readonly imageValidationService: ImageValidationService,
+        private artistService: ArtistService
     ) { }
 
     async find(params?: FindParams<AlbumEntity>) {
@@ -46,23 +48,29 @@ export class AlbumService {
 
     async create(params: CreateAlbumDto): Promise<AlbumEntity> {
         const myUser = await this.cls.get<UserEntity>('user')
-        console.log(myUser);
         if (!myUser) throw new Error('User not found');
 
         if (!myUser.roles.includes(UserRoles.ARTIST)) throw new ForbiddenException('You are not allowed to create album')
 
+        let artist = await this.artistService.findByUser(myUser);
+        if (!artist) throw new NotFoundException('Artist not found');
         if (params.coverImage) {
             await this.imageValidationService.validateImageUsage(params.coverImage);
         }
         const album = this.albumRepo.create({
-            title: params.albumName,
-            artist: myUser,
+            albumName: params.albumName,
+            releaseDate: params.releaseDate ?? new Date(),
+            artist: artist,
         })
+        const existAlbum = await this.albumRepo.findOne({ where: { albumName: album.albumName } })
+        if (existAlbum) throw new NotFoundException('Album already exists');
+
         if (params.coverImage) {
             const image = await this.uploadService.findImageById(params.coverImage);
             if (!image) {
                 throw new BadRequestException('This image is not available');
             }
+            album.coverImage = image;
         }
 
         return this.albumRepo.save(album);
@@ -78,11 +86,20 @@ export class AlbumService {
         if (params.coverImage) {
             await this.imageValidationService.validateImageUsage(params.coverImage);
         }
+        const artist = await this.artistService.findByUser(myUser);
+        if (!artist) {
+            throw new NotFoundException('Artist not found');
+        }
+
         const album = await this.albumRepo.findOne({
-            where: { id, artist: { id: myUser.id } }
-        })
+            where: { id, artist: { id: artist.id } },
+            relations: ['artist'],
+        });
+
 
         if (!album) throw new NotFoundException('Album not found');
+        const existAlbum = await this.albumRepo.findOne({ where: { albumName: album.albumName, id: Not(id) } })
+        if (existAlbum) throw new NotFoundException('Album already exists');
 
         if (params.coverImage) {
             const image = await this.uploadService.findImageById(params.coverImage);
@@ -123,15 +140,23 @@ export class AlbumService {
         if (!myUser) throw new NotFoundException('User not found');
         if (!myUser.roles.includes(UserRoles.ARTIST)) throw new ForbiddenException('You are not allowed to add track to this album');
 
+        const artist = await this.artistService.findByUser(myUser);
+        if (!artist) throw new NotFoundException('Artist not found');
+
         const album = await this.albumRepo.findOne({
-            where: { id: albumId, artist: { id: myUser.id } },
+            where: { id: albumId, artist: { id: artist.id } },
             relations: ['tracks']
         });
 
         if (!album) throw new NotFoundException('Album not found');
+        const track = await this.musicService.findOne({
+            where: { id: musicId },
+            relations: ['artist'],
+        });
 
-        const track = await this.musicService.findOne({ where: { id: musicId } })
+        // const track = await this.musicService.findOne({ where: { id: musicId } })
         if (!track) throw new NotFoundException('Music not found');
+        if (!track.artist || track.artist.id !== artist.id) throw new ForbiddenException('You are not allowed to add this track to the album because it does not belong to you.')
 
         if (album.tracks.find(item => item.id === musicId)) throw new ConflictException('Music is already added to this album');
 
@@ -145,8 +170,11 @@ export class AlbumService {
         if (!myUser) throw new NotFoundException('User not found');
         if (!myUser.roles.includes(UserRoles.ARTIST)) throw new ForbiddenException('User is not allowed to remove music from this album');
 
+        const artist = await this.artistService.findByUser(myUser);
+        if (!artist) throw new NotFoundException('Artist not found');
+
         const album = await this.albumRepo.findOne({
-            where: { id: albumId, artist: { id: myUser.id } },
+            where: { id: albumId, artist: { id: artist.id } },
             relations: ['tracks']
         });
 

@@ -42,7 +42,7 @@ export class CategoryService {
     })
   }
 
-  findByIds(ids: number[]) {
+  findByIds(ids: number[]){
     return this.categoryRepo.findBy({ id: In(ids) })
   }
 

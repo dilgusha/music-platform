@@ -8,10 +8,9 @@ export class CreateAlbumDto {
     @IsString()
     albumName: string
 
-    @Type()
+    @ApiProperty({ description: 'Album release date', required: false })
     @IsOptional()
-    @ApiProperty()
-    @IsDateString()
+    @Type(() => Date)
     releaseDate?: Date;
 
     @Type(()=> Number)

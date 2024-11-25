@@ -31,6 +31,7 @@ export class MusicService {
         private readonly imageValidationService: ImageValidationService,
         @InjectRepository(ArtistEntity)
         private artistRepo: Repository<ArtistEntity>,
+        private artistService: ArtistService
 
     ) { }
 
@@ -48,46 +49,124 @@ export class MusicService {
         })
     }
 
-
     async create(params: CreateMusicDto, file: Express.Multer.File): Promise<MusicEntity> {
-        const categories = await this.categoryService.findByIds(params.categories);
-
-        let myUser = await this.cls.get<UserEntity>('user')
-
-        if (!myUser.roles || !myUser.roles.includes(UserRoles.ADMIN)) {
-            throw new ForbiddenException('Only admins can create music');
+        if (!Array.isArray(params.categories)) {
+            try {
+                params.categories = typeof params.categories === 'string' 
+                    ? JSON.parse(params.categories) 
+                    : [params.categories];
+            } catch {
+                throw new BadRequestException('Invalid categories format. Expected an array of numbers.');
+            }
         }
-
-        const existingMusic = await this.musicRepo.findOne({
-            where: { name: params.name }
-        })
-        if (existingMusic) throw new ForbiddenException('Music with the same name already exists')
-        let image: ImageEntity | undefined = undefined;
+    
+        const categories = await this.categoryService.findByIds(params.categories);
+        if (!categories.length) {
+            throw new BadRequestException('No valid categories found.');
+        }
+    
+        const user = await this.cls.get<UserEntity>('user');
+        if (!user || !user.roles.includes(UserRoles.ARTIST)) {
+            throw new ForbiddenException('Only artists can create music.');
+        }
+    
+        const existingMusic = await this.musicRepo.findOne({ where: { name: params.name } });
+        if (existingMusic) {
+            throw new ForbiddenException('Music with the same name already exists.');
+        }
+    
+        let coverImage: ImageEntity | undefined = undefined;
         if (params.coverImageId) {
             await this.imageValidationService.validateImageUsage(params.coverImageId);
+            coverImage = await this.uploadService.findImageById(params.coverImageId);
+            if (!coverImage) throw new NotFoundException('Cover image not found.');
         }
-        let filename: string;
-        try {
-            const uploadResult = await this.musicUploadService.uploadFile(file);
-            filename = uploadResult.filename;
-        } catch (error) {
+    
+        if (!file) throw new BadRequestException('Please upload a music file.');
+        const { filename } = await this.musicUploadService.uploadFile(file).catch(() => {
             throw new BadRequestException('File upload failed.');
-        }
-        const artist = await this.getArtistByUser(myUser);
-
-
-        const music = this.musicRepo.create({ ...params, categories, track: filename, artist, coverImage: image });
-
-        if (params.coverImageId) {
-            const image = await this.uploadService.findImageById(params.coverImageId);
-
-            if (!image) throw new NotFoundException('Image not found');
-            music.coverImage = image;
-        }
-
+        });
+    
+        const artist = await this.getArtistByUser(user);
+        if (!artist) throw new NotFoundException('Artist not found for the current user.');
+    
+        const music = this.musicRepo.create({
+            ...params,
+            categories,
+            track: filename,
+            artist,
+            coverImage,
+        });
+    
         await this.musicRepo.save(music);
         return music;
     }
+    
+
+    // async create(params: CreateMusicDto, file: Express.Multer.File): Promise<MusicEntity> {
+    //     const categories = await this.categoryService.findByIds(params.categories);
+
+    //     let myUser = await this.cls.get<UserEntity>('user')
+
+    //     console.log(myUser);
+
+    //     console.log(myUser.roles);
+    //     if (!myUser.roles || !myUser.roles.includes(UserRoles.ARTIST)) {
+    //         throw new ForbiddenException('Only admins can create music');
+    //     }
+
+    //     const existingMusic = await this.musicRepo.findOne({
+    //         where: { name: params.name }
+    //     })
+    //     if (existingMusic) throw new ForbiddenException('Music with the same name already exists')
+    //     let image: ImageEntity | undefined = undefined;
+    //     if (params.coverImageId) {
+    //         await this.imageValidationService.validateImageUsage(params.coverImageId);
+    //     }
+    //     let filename: string;
+    //     try {
+    //         const uploadResult = await this.musicUploadService.uploadFile(file);
+    //         filename = uploadResult.filename;
+    //     } catch (error) {
+    //         throw new BadRequestException('File upload failed.');
+    //     }
+    //     const artist = await this.getArtistByUser(myUser);
+
+    //     if (!file) {
+    //         throw new BadRequestException('Please upload a music file');
+    //     }
+
+    //     console.log('Categories:', params.categories);
+    //     console.log('Type:', typeof params.categories);
+    //     console.log('Raw categories:', params.categories);
+
+    //     if (typeof params.categories === 'string') {
+    //         try {
+    //             params.categories = JSON.parse(params.categories);
+    //         } catch (error) {
+    //             throw new BadRequestException('Invalid categories format. Expected an array of numbers.');
+    //         }
+    //     }
+
+
+    //     if (!Array.isArray(params.categories)) {
+    //         params.categories = [params.categories];
+    //     }
+
+    //     console.log('Processed categories:', params.categories);
+
+    //     const music = this.musicRepo.create({ ...params, categories, track: filename, artist, coverImage: image });
+
+    //     if (params.coverImageId) {
+    //         const image = await this.uploadService.findImageById(params.coverImageId);
+
+    //         if (!image) throw new NotFoundException('Image not found');
+    //         music.coverImage = image;
+    //     }
+
+    //     await this.musicRepo.save(music);
+    //     return music;
+    // }
 
     async getArtistByUser(user: UserEntity): Promise<ArtistEntity> {
         if (user.roles.includes(UserRoles.ARTIST)) {
@@ -109,7 +188,10 @@ export class MusicService {
         const myUser = await this.cls.get<UserEntity>('user')
         if (!myUser) throw new NotFoundException('User not found');
 
-        if (!myUser.roles || !myUser.roles.includes(UserRoles.ADMIN)) throw new ForbiddenException('Only admins can delete music');
+        const artist = await this.artistService.findByUser(myUser);
+        if (!artist) throw new NotFoundException('Artist not found');
+
+        if (!myUser.roles || !myUser.roles.includes(UserRoles.ARTIST)) throw new ForbiddenException('Only artists can delete music');
 
         let result = await this.musicRepo.delete({ id })
         if (result.affected === 0) throw new NotFoundException()
@@ -123,7 +205,7 @@ export class MusicService {
     async update(id: number, params: UpdateMusicDto,): Promise<MusicEntity> {
         const myUser = await this.cls.get<UserEntity>('user')
         if (!myUser) throw new NotFoundException('User not found');
-        if (!myUser.roles || !myUser.roles.includes(UserRoles.ADMIN)) throw new ForbiddenException('Only admins can update music');
+        if (!myUser.roles || !myUser.roles.includes(UserRoles.ARTIST)) throw new ForbiddenException('Only admins can update music');
 
         const music = await this.musicRepo.findOne({
             where: { id },

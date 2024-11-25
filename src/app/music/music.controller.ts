@@ -31,7 +31,7 @@ export class MusicController {
     }
 
     @Post('uploadSong')
-    @Roles(UserRoles.ADMIN)
+    @Roles(UserRoles.ARTIST)
     @ApiOperation({ summary: 'Upload a new song' })
     @ApiConsumes('multipart/form-data')
     @ApiBody({
@@ -53,33 +53,33 @@ export class MusicController {
         @UploadedFile() file: Express.Multer.File,
         @Body() createMusicDto: CreateMusicDto,
     ) {
-        if (!file) {
-            throw new BadRequestException('Please upload a music file');
-        }
+        // if (!file) {
+        //     throw new BadRequestException('Please upload a music file');
+        // }
 
-        console.log('Raw categories:', createMusicDto.categories);
+        // console.log('Raw categories:', createMusicDto.categories);
 
-        if (typeof createMusicDto.categories === 'string') {
-            try {
-                createMusicDto.categories = JSON.parse(createMusicDto.categories);
-            } catch (error) {
-                throw new BadRequestException('Invalid categories format. Expected an array of numbers.');
-            }
-        }
+        // if (typeof createMusicDto.categories === 'string') {
+        //     try {
+        //         createMusicDto.categories = JSON.parse(createMusicDto.categories);
+        //     } catch (error) {
+        //         throw new BadRequestException('Invalid categories format. Expected an array of numbers.');
+        //     }
+        // }
 
 
-        if (!Array.isArray(createMusicDto.categories)) {
-            createMusicDto.categories = [createMusicDto.categories];
-        }
+        // if (!Array.isArray(createMusicDto.categories)) {
+        //     createMusicDto.categories = [createMusicDto.categories];
+        // }
 
-        console.log('Processed categories:', createMusicDto.categories);
+        // console.log('Processed categories:', createMusicDto.categories);
 
         return this.musicService.create(createMusicDto, file);
     }
 
 
     @Delete(':id')
-    @Roles(UserRoles.ADMIN)
+    @Roles(UserRoles.ARTIST)
     @ApiOperation({ summary: 'Delete music' })
     async deleteMusic(@Param('id') id: number) {
         return this.musicService.delete(id)
@@ -88,7 +88,7 @@ export class MusicController {
 
     @Post(':id')
     @ApiOperation({ summary: 'Update music' })
-    @Roles(UserRoles.ADMIN)
+    @Roles(UserRoles.ARTIST)
      updateMusic(@Param('id') id: number, @Body() body: UpdateMusicDto) {
         return  this.musicService.update(id,body)
     }

@@ -10,9 +10,9 @@ export class AlbumEntity {
     id: number;
 
     @Column()
-    title: string; 
+    albumName: string; 
 
-    @Column({ nullable: true })
+    @Column({ type: 'date', nullable: true })
     releaseDate: Date; 
 
     @OneToOne(() => ImageEntity, { eager: true })

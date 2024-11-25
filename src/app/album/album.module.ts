@@ -7,9 +7,10 @@ import { AlbumService } from "./album.service";
 import { UploadModule } from "../upload/upload.module";
 import { MusicModule } from "../music/music.module";
 import { SharedModule } from "src/shared/shared.module";
+import { ArtistModule } from "../artist/artist.module";
 
 @Module({
-    imports: [TypeOrmModule.forFeature([AlbumEntity]),UploadModule,MusicModule,SharedModule],
+    imports: [TypeOrmModule.forFeature([AlbumEntity]),UploadModule,MusicModule,SharedModule,ArtistModule],
     controllers: [AlbumController],
     providers: [AlbumService],
     exports: [AlbumService]

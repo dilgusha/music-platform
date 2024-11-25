@@ -12,6 +12,7 @@ import { PlaylistEntity } from "src/database/entities/Playlist.entity";
 import { PlaylistModule } from "../playlist/playlist.module";
 import { SharedModule } from "src/shared/shared.module";
 import { ArtistEntity } from "src/database/entities/Artist.entity";
+import { ArtistModule } from "../artist/artist.module";
 
 @Module({
     imports: [
@@ -19,6 +20,7 @@ import { ArtistEntity } from "src/database/entities/Artist.entity";
         CategoryModule,
         UploadModule,
         SharedModule,
+        ArtistModule,
         forwardRef(() => PlaylistModule)
     ],
     controllers: [MusicController],
